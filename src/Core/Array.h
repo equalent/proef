@@ -87,9 +87,9 @@ class TArray
 	{
 		check(count < m_Count);
 		const size_t deletedElements = m_Count - count;
-		for (size_t i = m_Count - 1; i < m_Count - 1 + deletedElements; ++i)
+		for (size_t i = count; i < m_Count; ++i)
 		{
-			m_Array[i].~T(); // call destructors on all elements
+			(m_Array + i)->~T(); // call destructors on all elements
 		}
 		m_Count = count;
 		RawResize(m_Count + m_Reservation); // reallocate array with new count
