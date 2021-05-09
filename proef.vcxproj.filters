@@ -17,6 +17,9 @@
     <ClCompile Include="src\Core\Console.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Core\Map.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\pch.h" />
@@ -57,10 +60,25 @@
     <ClInclude Include="src\Core\Console.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="src\Core\Object.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Map.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Utils.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\BinaryTree.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
       <UniqueIdentifier>{4da99bd3-0746-4afc-ba1d-85795b77517e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{0180a5ba-83ff-49a4-90f0-ed9e8354d78a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

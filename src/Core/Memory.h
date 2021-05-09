@@ -28,6 +28,7 @@ enum class EAllocationPurpose : uint
 {
 	General,
 	InternalString,
+	InternalDynamicInit,
 
 	Max
 };

@@ -32,7 +32,7 @@ struct __SUnitTestDesc
 	void(*TestBody)();
 };
 
-extern TArray<__SUnitTestDesc> __gUnitTests;
+extern TArray<__SUnitTestDesc, TRawAllocator<__SUnitTestDesc, EAllocationPurpose::InternalDynamicInit>> __gUnitTests;
 
 struct __SUnitTestFactory
 {

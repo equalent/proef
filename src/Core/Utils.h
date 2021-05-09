@@ -24,40 +24,35 @@
 
 #pragma once
 
-template<typename TFirst, typename TSecond>
-struct TPair
+namespace FUtils
 {
-	using FirstType = TFirst;
-	using SecondType = TSecond;
+	template<typename T>
+	struct Less
+	{
+		constexpr bool operator()(const T& v1, const T& v2)
+		{
+			return v1 < v2;
+		}
+	};
 	
-	TFirst First;
-	TSecond Second;
-
-	TPair(const TFirst& first, const TSecond& second) : First(first), Second(second)
+	template<typename T>
+	void Swap(T& v1, T& v2)
 	{
+		const T initial = v1;
+		v1 = v2;
+		v2 = initial;
 	}
-};
+}
 
-template<typename TFirst, typename TSecond, typename TCompare = FUtils::Less<TFirst>>
-struct TPairFirstCompare
-{
-	using PairType = TPair<TFirst, TSecond>;
-	
-	TCompare Compare;
-	
-	constexpr bool operator()(const PairType& v1, const PairType& v2)
-	{
-		return Compare(v1.First, v2.First);
-	}
+/* Reverse iterators wrapper for range-based for (https://stackoverflow.com/a/28139075) */
+template <typename T>
+struct TReverseWrapper { T& Iterable; };
 
-	// overloads that allow TMap to find nodes by key only (without the whole pair)
-	constexpr bool operator()(const TFirst& v1, const PairType& v2)
-	{
-		return Compare(v1, v2.First);
-	}
+template <typename T>
+auto begin(TReverseWrapper<T> wrapper) { return std::rbegin(wrapper.Iterable); }
 
-	constexpr bool operator()(const PairType& v1, const TFirst& v2)
-	{
-		return Compare(v1.First, v2);
-	}
-};
+template <typename T>
+auto end(TReverseWrapper<T> wrapper) { return std::rend(wrapper.Iterable); }
+
+template <typename T>
+TReverseWrapper<T> reverse(T&& iterable) { return { iterable }; }

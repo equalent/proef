@@ -24,40 +24,23 @@
 
 #pragma once
 
-template<typename TFirst, typename TSecond>
-struct TPair
+struct STypeDesc;
+
+/**
+ * A common base class for all PObject types.
+ * Provides memory allocation, reference counting, reflection and serialization
+ */
+class PObject
 {
-	using FirstType = TFirst;
-	using SecondType = TSecond;
-	
-	TFirst First;
-	TSecond Second;
+protected:
+	PObject();
+	virtual ~PObject();
+public:
+	// Delete copy and move constructors and assn operators: objects reside in the heap
+	PObject(const PObject& other) = delete;
+	PObject(PObject&& other) = delete;
+	PObject& operator=(const PObject& other) = delete;
+	PObject& operator=(PObject&& other) = delete;
 
-	TPair(const TFirst& first, const TSecond& second) : First(first), Second(second)
-	{
-	}
-};
-
-template<typename TFirst, typename TSecond, typename TCompare = FUtils::Less<TFirst>>
-struct TPairFirstCompare
-{
-	using PairType = TPair<TFirst, TSecond>;
-	
-	TCompare Compare;
-	
-	constexpr bool operator()(const PairType& v1, const PairType& v2)
-	{
-		return Compare(v1.First, v2.First);
-	}
-
-	// overloads that allow TMap to find nodes by key only (without the whole pair)
-	constexpr bool operator()(const TFirst& v1, const PairType& v2)
-	{
-		return Compare(v1, v2.First);
-	}
-
-	constexpr bool operator()(const PairType& v1, const TFirst& v2)
-	{
-		return Compare(v1.First, v2);
-	}
+	virtual const STypeDesc& GetInstanceType() = 0;
 };

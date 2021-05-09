@@ -22,42 +22,43 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "pch.h"
 
-template<typename TFirst, typename TSecond>
-struct TPair
+UnitTest(Map_Basic)
 {
-	using FirstType = TFirst;
-	using SecondType = TSecond;
-	
-	TFirst First;
-	TSecond Second;
-
-	TPair(const TFirst& first, const TSecond& second) : First(first), Second(second)
 	{
-	}
-};
+		TMap<int, int> intIntMap;
+		intIntMap.Insert(3, 10);
+		intIntMap.Insert(21, 10);
+		intIntMap.Insert(32, 10);
+		intIntMap.Insert(17, 199);
+		intIntMap.Insert(7, 10444);
+		tcheck(intIntMap.GetCount() == 5);
+		tcheck(intIntMap[17] == 199);
+		tcheck(intIntMap[7] == 10444);
+		intIntMap[7] = 99;
+		tcheck(intIntMap[7] == 99);
 
-template<typename TFirst, typename TSecond, typename TCompare = FUtils::Less<TFirst>>
-struct TPairFirstCompare
-{
-	using PairType = TPair<TFirst, TSecond>;
-	
-	TCompare Compare;
-	
-	constexpr bool operator()(const PairType& v1, const PairType& v2)
-	{
-		return Compare(v1.First, v2.First);
-	}
+		int validKeys[] = { 3, 7, 17, 21, 32 }; // map keys sorted
+		uint i = 0;
+		for(TPair<int, int> pair : intIntMap)
+		{
+			tcheck(validKeys[i] == pair.First);
+			++i;
+		}
+		tcheck(i == 5);
 
-	// overloads that allow TMap to find nodes by key only (without the whole pair)
-	constexpr bool operator()(const TFirst& v1, const PairType& v2)
-	{
-		return Compare(v1, v2.First);
-	}
+		i = 5;
+		for (TPair<int, int> pair : reverse(intIntMap))
+		{
+			tcheck(validKeys[i - 1] == pair.First);
+			--i;
+		}
+		tcheck(i == 0);
 
-	constexpr bool operator()(const PairType& v1, const TFirst& v2)
-	{
-		return Compare(v1.First, v2);
+		tcheck(intIntMap.GetTree().GetBlackHeight() == 2);
+		
+		intIntMap.Clear();
+		tcheck(intIntMap.GetCount() == 0);
 	}
-};
+}

@@ -26,11 +26,14 @@
 
 #include "Defines.h"
 #include "Types.h"
+#include "Utils.h"
 #include "Assert.h"
 #include "Memory.h"
 
 #include "Containers.h"
+#include "BinaryTree.h"
 #include "Array.h"
+#include "Map.h"
 #include "String.h"
 
 #include "StringConv.h"

@@ -32,7 +32,7 @@ static struct
 	uint NumSuccesses = 0;
 } gCurrentTestInfo{};
 
-TArray<__SUnitTestDesc> __gUnitTests;
+TArray<__SUnitTestDesc, TRawAllocator<__SUnitTestDesc, EAllocationPurpose::InternalDynamicInit>> __gUnitTests;
 
 void RunUnitTestsAndExit()
 {
@@ -48,7 +48,7 @@ void RunUnitTestsAndExit()
 		gCurrentTestInfo.NumSuccesses = 0;
 		gCurrentTestInfo.NumFailures = 0;
 
-		FConsole::WriteLine(FString::PrintF("[TEST \"%s\"]", test.TestName));
+		FConsole::WriteLine(FString::PrintF("[TEST \"%s\" in \"%s\"]", test.TestName, test.TestFilename));
 		test.TestBody();
 		const bool succeeded = gCurrentTestInfo.NumFailures == 0;
 
@@ -83,7 +83,7 @@ void RunUnitTestsAndExit()
 	::ExitProcess(allSucceeded ? 0 : 3);
 }
 
-bool __UnitTestAssert(const bool result, const char* code, const char* message, uint line)
+bool __UnitTestAssert(const bool result, const char* code, const char* message, const uint line)
 {
 	verify(gCurrentTestInfo.Desc);
 
@@ -91,7 +91,7 @@ bool __UnitTestAssert(const bool result, const char* code, const char* message, 
 	{
 		gCurrentTestInfo.NumFailures++;
 		FConsole::SetTextColor(EConsoleTextColor::Red);
-		FConsole::WriteLine("    Failed:");
+		FConsole::WriteLine(FString::PrintF("    Failed on line %u:", line));
 
 		if (message)
 			FConsole::WriteLine(FString::PrintF("        %s   :   %s", code, message));

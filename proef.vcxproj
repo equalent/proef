@@ -204,6 +204,7 @@
     <ClCompile Include="src\Core\Array.cpp" />
     <ClCompile Include="src\Core\Assert.cpp" />
     <ClCompile Include="src\Core\Console.cpp" />
+    <ClCompile Include="src\Core\Map.cpp" />
     <ClCompile Include="src\Core\Memory.cpp" />
     <ClCompile Include="src\Core\UnitTest.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -217,11 +218,15 @@
     <ClInclude Include="src\Core\Core.h" />
     <ClInclude Include="src\Core\Defines.h" />
     <ClInclude Include="src\Core\FatalError.h" />
+    <ClInclude Include="src\Core\Map.h" />
     <ClInclude Include="src\Core\Memory.h" />
+    <ClInclude Include="src\Core\Object.h" />
     <ClInclude Include="src\Core\String.h" />
     <ClInclude Include="src\Core\StringConv.h" />
+    <ClInclude Include="src\Core\BinaryTree.h" />
     <ClInclude Include="src\Core\Types.h" />
     <ClInclude Include="src\Core\UnitTest.h" />
+    <ClInclude Include="src\Core\Utils.h" />
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
