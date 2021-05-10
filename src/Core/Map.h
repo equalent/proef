@@ -117,76 +117,89 @@ private:
 	TreeType m_Tree;
 
 public:
-	TMap() = default;
+	FORCEINLINE TMap() = default;
 
-	void Insert(const TKey& key, const TValue& value)
+	FORCEINLINE void Insert(const TKey& key, const TValue& value)
 	{
 		m_Tree.Insert(TPair(key, value));
 	}
 
-	void InsertOrUpdate(const TKey& key, const TValue& value)
+	FORCEINLINE void InsertOrUpdate(const TKey& key, const TValue& value)
 	{
 		m_Tree.InsertOrUpdate(TPair(key, value));
 	}
 
-	size_t GetCount() const
+	FORCEINLINE void Remove(const TKey& key)
+	{
+		TreeNodeType* node = m_Tree.FindNode(key);
+		if (node) {
+			m_Tree.DeleteNode(node);
+		}
+	}
+
+	FORCEINLINE size_t GetCount() const
 	{
 		return m_Tree.GetNodeCount();
 	}
 
-	TreeType& GetTree()
+	FORCEINLINE TreeType& GetTree()
 	{
 		return m_Tree;
 	}
 
-	void Clear()
+	FORCEINLINE void Clear()
 	{
 		m_Tree.Clear();
 	}
 
-	TValue& operator[](const TKey& key)
+	FORCEINLINE TValue& operator[](const TKey& key)
 	{
 		TreeNodeType* node = m_Tree.FindNode(key);
+		if(!node)
+		{
+			node = m_Tree.Insert(TPair(key, TValue())).InsertedNode;
+		}
+		
 		return node->Data.Second;
 	}
 
-	Iterator begin()
+	FORCEINLINE Iterator begin()
 	{
 		return Iterator(m_Tree.GetRootNode()->GetMinValueNode());
 	}
 
-	Iterator end()
+	FORCEINLINE Iterator end()
 	{
 		return Iterator(nullptr);
 	}
 
-	const Iterator& begin() const
+	FORCEINLINE const Iterator& begin() const
 	{
 		return Iterator(m_Tree.GetRootNode()->GetMinValueNode());
 	}
 
-	const Iterator& end() const
+	FORCEINLINE const Iterator& end() const
 	{
 		return Iterator(nullptr);
 	}
 	
 
-	ReverseIterator rbegin()
+	FORCEINLINE ReverseIterator rbegin()
 	{
 		return ReverseIterator(m_Tree.GetRootNode()->GetMaxValueNode());
 	}
 
-	ReverseIterator rend()
+	FORCEINLINE ReverseIterator rend()
 	{
 		return ReverseIterator(nullptr);
 	}
 
-	const ReverseIterator& rbegin() const
+	FORCEINLINE const ReverseIterator& rbegin() const
 	{
 		return ReverseIterator(m_Tree.GetRootNode()->GetMaxValueNode());
 	}
 
-	const ReverseIterator& rend() const
+	FORCEINLINE const ReverseIterator& rend() const
 	{
 		return ReverseIterator(nullptr);
 	}

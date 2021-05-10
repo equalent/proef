@@ -65,7 +65,7 @@ struct TBinaryTreeNode
 		else
 		{
 			// find the first node which is a left child of its parent
-			
+
 			TBinaryTreeNode* n = this;
 			TBinaryTreeNode* p = Parent;
 
@@ -90,7 +90,7 @@ struct TBinaryTreeNode
 		else
 		{
 			// find the first node which is a right child of its parent
-			
+
 			TBinaryTreeNode* n = this;
 			TBinaryTreeNode* p = Parent;
 
@@ -134,37 +134,19 @@ struct TBinaryTreeNode
 		return x == Left;
 	}
 
-#if 0
-	// untested function
-	void ReplaceWith(TBinaryTreeNode* other)
+	size_t GetChildCount() const
 	{
-		if(Parent)
+		size_t count = 0;
+		if (Left)
 		{
-			if(Parent->IsLeftChild(this))
-			{
-				Parent->Left = other;
-			} else
-			{
-				Parent->Right = other;
-			}
+			count += Left->GetChildCount() + 1;
 		}
-
-		if(other->Parent)
+		if (Right)
 		{
-			if (other->Parent->IsLeftChild(other))
-			{
-				other->Parent->Left = nullptr;
-			}
-			else
-			{
-				other->Parent->Right = nullptr;
-			}
+			count += Right->GetChildCount() + 1;
 		}
-
-		other->Parent = Parent;
-		Parent = nullptr;
+		return count;
 	}
-#endif
 };
 
 /**
@@ -175,24 +157,29 @@ template <typename T, typename TNode = TBinaryTreeNode<T>, typename TCompare = F
           TRawAllocator<TNode>>
 class TBinaryTree
 {
-	TCompare m_Compare;
-	TAllocator m_Allocator;
+	TCompare m_Compare{};
+	TAllocator m_Allocator{};
 
 	TNode* m_RootNode = nullptr;
 
 	template <typename...Args>
-	FORCEINLINE TNode* NewNode(Args ...args)
+	FORCEINLINE TNode* NewNode(Args& ...args)
 	{
 		TNode* res = m_Allocator.Alloc(1);
 		new(res)TNode(args...);
 		return res;
 	}
 
-	FORCEINLINE void RotateTree(bool right, TNode* root)
+	FORCEINLINE void RotateRight(TNode* root)
 	{
-		TNode* pivot = right ? root->Left : root->Right;
-		(right ? root->Left : root->Right) = right ? pivot->Right : pivot->Left;
-		(right ? pivot->Right : pivot->Left) = root;
+		TNode* pivot = root->Left;
+		root->Left = pivot->Right;
+
+		if (pivot->Right)
+		{
+			pivot->Right->Parent = root;
+		}
+		pivot->Parent = root->Parent;
 
 		if (root->Parent)
 		{
@@ -210,7 +197,38 @@ class TBinaryTree
 			m_RootNode = pivot;
 		}
 
+		pivot->Right = root;
+		root->Parent = pivot;
+	}
+
+	FORCEINLINE void RotateLeft(TNode* root)
+	{
+		TNode* pivot = root->Right;
+		root->Right = pivot->Left;
+
+		if (pivot->Left)
+		{
+			pivot->Left->Parent = root;
+		}
 		pivot->Parent = root->Parent;
+
+		if (root->Parent)
+		{
+			if (root->Parent->IsLeftChild(root))
+			{
+				root->Parent->Left = pivot;
+			}
+			else
+			{
+				root->Parent->Right = pivot;
+			}
+		}
+		else
+		{
+			m_RootNode = pivot;
+		}
+
+		pivot->Left = root;
 		root->Parent = pivot;
 	}
 
@@ -251,7 +269,7 @@ class TBinaryTree
 						 * 1. Right rotation of grandparent
 						 * 2. Swap grandparent and parent colors
 						 */
-						RotateTree(true, grandparent);
+						RotateRight(grandparent);
 						parent->IsRed = 0;
 						grandparent->IsRed = 1;
 					}
@@ -264,8 +282,8 @@ class TBinaryTree
 						 * 3. Swap grandparent and parent colors
 						 */
 
-						RotateTree(false, parent);
-						RotateTree(true, grandparent);
+						RotateLeft(parent);
+						RotateRight(grandparent);
 						node->IsRed = 0;
 						grandparent->IsRed = 1;
 					}
@@ -276,7 +294,7 @@ class TBinaryTree
 						 * 1. Left rotation of grandparent
 						 * 2. Swap grandparent and parent colors
 						 */
-						RotateTree(false, grandparent);
+						RotateLeft(grandparent);
 						parent->IsRed = 0;
 						grandparent->IsRed = 1;
 					}
@@ -289,8 +307,8 @@ class TBinaryTree
 						 * 3. Swap grandparent and parent colors
 						 */
 
-						RotateTree(true, parent);
-						RotateTree(false, grandparent);
+						RotateRight(parent);
+						RotateLeft(grandparent);
 						node->IsRed = 0;
 						grandparent->IsRed = 1;
 					}
@@ -300,38 +318,60 @@ class TBinaryTree
 	}
 
 	template <bool TOrUpdate = false>
-	FORCEINLINE bool InsertInternal(TNode*& node, TNode* parent, const T& data)
+	FORCEINLINE bool InsertInternal(TNode** node, const T& data, TNode*& insertedNode)
 	{
-		if (!node)
+		TNode* parent = nullptr;
+
+		while(*node)
 		{
-			node = NewNode(data);
-			node->Parent = parent;
-			Balance(node);
-			return true;
+			if (m_Compare(data, (*node)->Data)) // presume <
+			{
+				parent = *node;
+				node = &((*node)->Left);
+			} else if(m_Compare((*node)->Data, data)) // presume >
+			{
+				parent = *node;
+				node = &((*node)->Right);
+			} else if constexpr (TOrUpdate) // presume ==
+			{
+				(*node)->Data = data;
+				insertedNode = *node;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
-		else if (m_Compare(data, node->Data)) // presume <
-		{
-			return InsertInternal(node->Left, node, data);
-		}
-		else if (m_Compare(node->Data, data)) // presume >
-		{
-			return InsertInternal(node->Right, node, data);
-		}
-		else if constexpr (TOrUpdate) // presume ==
-		{
-			node->Data = data;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		
+		*node = NewNode(data);
+		(*node)->Parent = parent;
+		Balance(*node);
+		insertedNode = *node;
+		return true;
 	}
 
 	FORCEINLINE void FreeNode(TNode* n)
 	{
 		n->~TNode();
 		m_Allocator.Free(n);
+	}
+
+	FORCEINLINE void TransplantNode(TNode* orig, TNode* rep)
+	{
+		if (!orig->Parent)
+		{
+			m_RootNode = rep;
+		}
+		else if (orig->Parent->IsLeftChild(orig))
+		{
+			orig->Parent->Left = rep;
+		}
+		else
+		{
+			orig->Parent->Right = rep;
+		}
+		rep->Parent = orig->Parent;
 	}
 
 	FORCEINLINE void DeleteTree(TNode* n)
@@ -346,8 +386,91 @@ class TBinaryTree
 		DeleteTree(nRight);
 	}
 
+	FORCEINLINE void FixDoubleBlack(TNode* x)
+	{
+		// double black is fixed once the node is root or red-black
+		while (x != m_RootNode && !x->IsRed)
+		{
+			if (x->Parent->IsLeftChild(x)) // if x is left child of its parent
+			{
+				TNode* w = x->Parent->Right; // w = x's sibling
+
+				if (w->IsRed) // Case I
+				{
+					w->IsRed = 0;
+					x->Parent->IsRed = 1;
+					RotateLeft(x->Parent); // left rotation of the parent
+					w = x->Parent->Right;
+				}
+
+				if (!w->Right->IsRed && !w->Left->IsRed) // if both children of w are black, Case II
+				{
+					w->IsRed = 1;
+					x = x->Parent;
+				}
+				else if (!w->Right->IsRed) // if w's right child is black, Case III
+				{
+					w->Left->IsRed = 0;
+					w->IsRed = 1;
+					RotateRight(w);
+					w = x->Parent->Right;
+				}
+				else
+				{
+					// Case IV
+					w->IsRed = x->Parent->IsRed;
+					x->Parent->IsRed = 0;
+					w->Right->IsRed = 0;
+					RotateLeft(x->Parent);
+					x = m_RootNode;
+				}
+			}
+			else // if x is right child of its parent
+			{
+				TNode* w = x->Parent->Left; // w = x's sibling
+
+				if (w->IsRed) // Case I
+				{
+					w->IsRed = 0;
+					x->Parent->IsRed = 1;
+					RotateRight(x->Parent); // right rotation of the parent
+					w = x->Parent->Left;
+				}
+
+				if (!w->Right->IsRed && !w->Left->IsRed) // if both children of w are black, Case II
+				{
+					w->IsRed = 1;
+					x = x->Parent;
+				}
+				else if (!w->Left->IsRed) // if w's right child is black, Case III
+				{
+					w->Right->IsRed = 0;
+					w->IsRed = 1;
+					RotateLeft(w);
+					w = x->Parent->Left;
+				}
+				else
+				{
+					// Case IV
+					w->IsRed = x->Parent->IsRed;
+					x->Parent->IsRed = 0;
+					w->Left->IsRed = 0;
+					RotateRight(x->Parent);
+					x = m_RootNode;
+				}
+			}
+		}
+		x->IsRed = 0;
+	}
+
 public:
-	~TBinaryTree()
+	struct InsertResult
+	{
+		bool Success;
+		TNode* InsertedNode;
+	};
+
+	FORCEINLINE ~TBinaryTree()
 	{
 		Clear();
 	}
@@ -360,38 +483,39 @@ public:
 		m_RootNode = nullptr;
 	}
 
-	FORCEINLINE bool Insert(const T& data)
+	FORCEINLINE InsertResult Insert(const T& data)
 	{
-		return InsertInternal(m_RootNode, nullptr, data);
+		TNode* insertedNode;
+		return {InsertInternal(&m_RootNode, data, insertedNode), insertedNode};
 	}
 
-	FORCEINLINE bool InsertOrUpdate(const T& data)
+	FORCEINLINE InsertResult InsertOrUpdate(const T& data)
 	{
-		return InsertInternal<true>(m_RootNode, nullptr, data);
+		TNode* insertedNode;
+		return {InsertInternal<true>(&m_RootNode, data, insertedNode), insertedNode};
 	}
 
-	template<typename U>
+	template <typename U>
 	FORCEINLINE TNode* FindNode(const U& data, TNode* node)
 	{
-		if (!node)
+		while (node)
 		{
-			return nullptr;
+			if (m_Compare(data, node->Data)) // presume <
+			{
+				node = node->Left;
+			}
+			else if (m_Compare(node->Data, data)) // presume >
+			{
+				node = node->Right;
+			} else
+			{
+				return node;
+			}
 		}
-		else if (m_Compare(data, node->Data)) // presume <
-		{
-			return FindNode(data, node->Left);
-		}
-		else if (m_Compare(node->Data, data)) // presume >
-		{
-			return FindNode(data, node->Right);
-		}
-		else // presume ==
-		{
-			return node;
-		}
+		return node;
 	}
 
-	template<typename U>
+	template <typename U>
 	FORCEINLINE TNode* FindNode(const U& data)
 	{
 		return FindNode(data, m_RootNode);
@@ -399,69 +523,54 @@ public:
 
 	FORCEINLINE void DeleteNode(TNode* n)
 	{
-		if (!n) return;
+		if (!n)return;
 
-		if (!n->Left && !n->Right) // node with leaves only: simply delete
+		char originalIsRed = n->IsRed;
+		TNode* x;
+
+		if (!n->Left)
 		{
-			if (n->Parent) // if node has a parent, mark the node as a leaf
-			{
-				if (n->Parent->IsLeftChild(n))
-				{
-					n->Parent->Left = nullptr;
-				}
-				else
-				{
-					n->Parent->Right = nullptr;
-				}
-			}
-			FreeNode(n);
+			x = n->Right;
+			TransplantNode(n, x);
 		}
-		else if (n->Left && n->Right) // node has two children
+		else if (!n->Right)
 		{
-			if (n->Right->IsEmpty()) // right child empty: replace self data with its data
+			x = n->Left;
+			TransplantNode(n, x);
+		}
+		else
+		{
+			TNode* y = n->Right->GetMinValueNode();
+			originalIsRed = y->IsRed;
+			x = y->Right;
+
+			if (y->Parent == n)
 			{
-				n->Data = (T&&)n->Right->Data; // move data from the right one
-				DeleteNode(n->Right);
+				x->Parent = y;
 			}
 			else
 			{
-				TNode* inorderSuccessor = n->GetInorderSuccessor();
-				n->Data = (T&&)inorderSuccessor->Data;
-				DeleteNode(inorderSuccessor);
+				TransplantNode(y, y->Right);
+				y->Right = n->Right;
+				y->Right->Parent = y;
 			}
+
+			TransplantNode(n, y);
+			y->Left = n->Left;
+			y->Left->Parent = y;
+			y->IsRed = n->IsRed;
 		}
-		else if (n->Left) // only left child
+
+		FreeNode(n);
+		if (!originalIsRed) // the node is now double-black which violates the rules
 		{
-			n->Data = (T&&)n->Left->Data;
-			DeleteNode(n->Left);
-		}
-		else // only right child
-		{
-			n->Data = (T&&)n->Right->Data;
-			DeleteNode(n->Right);
+			FixDoubleBlack(x);
 		}
 	}
 
 	FORCEINLINE NODISCARD size_t GetNodeCount() const
 	{
-		TNode* n = m_RootNode;
-		size_t count = 0;
-
-		while (n)
-		{
-			++count;
-			n = n->Left;
-		}
-
-		n = m_RootNode;
-
-		while (n)
-		{
-			++count;
-			n = n->Right;
-		}
-
-		return count;
+		return m_RootNode ? m_RootNode->GetChildCount() + 1 : 0;
 	}
 
 	FORCEINLINE NODISCARD size_t GetBlackHeight() const
@@ -471,16 +580,18 @@ public:
 
 		while (n)
 		{
-			if(!n->IsRed)
+			if (!n->IsRed)
 				++height;
 
-			if(n->Left)
+			if (n->Left)
 			{
 				n = n->Left;
-			} else if(n->Right)
+			}
+			else if (n->Right)
 			{
 				n = n->Right;
-			} else
+			}
+			else
 			{
 				break;
 			}
